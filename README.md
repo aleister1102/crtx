@@ -57,7 +57,7 @@ cat list_of_domains.txt | ./crtshx
 **Find all domains associated with an Organization Name:**
 *Note: Use quotes if the name contains spaces.*
 ```sh
-./crtx -o "Google LLC"
+./crtshx -o "Google LLC"
 ```
 
 ### Recursive Search
