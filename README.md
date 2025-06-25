@@ -12,6 +12,13 @@
 
 ## Installation
 
+### Install from GitHub
+```sh
+go install github.com/aleister1102/crtshx@latest
+```
+
+### Build from Source
+
 To get started, ensure you have Go installed on your system. Then, you can build the tool from the source:
 
 ```sh
