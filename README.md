@@ -1,6 +1,6 @@
-# crtx
+# crtshx
 
-`crtx` is a powerful and concurrent subdomain enumeration tool that leverages Certificate Transparency logs from `crt.sh`. It is written in Go and designed for performance and flexibility, making it a valuable asset for security researchers and system administrators.
+`crtshx` is a powerful and concurrent subdomain enumeration tool that leverages Certificate Transparency logs from `crt.sh`. It is written in Go and designed for performance and flexibility, making it a valuable asset for security researchers and system administrators.
 
 ## Features
 
@@ -23,33 +23,33 @@ To get started, ensure you have Go installed on your system. Then, you can build
 
 ```sh
 # Clone the repository (or just use the existing source code)
-# git clone https://github.com/your-user/crtx.git
-# cd crtx
+# git clone https://github.com/aleister1102/crtshx.git
+# cd crtshx
 
 # Build the executable
 go build
 ```
-This will create a `crtx` (or `crtx.exe` on Windows) executable in the current directory.
+This will create a `crtshx` (or `crtshx.exe` on Windows) executable in the current directory.
 
 ## Usage
 
-`crtx` provides a variety of flags and input methods to suit different enumeration needs.
+`crtshx` provides a variety of flags and input methods to suit different enumeration needs.
 
 ### Basic Usage
 
 **Find subdomains for a single domain:**
 ```sh
-./crtx -d example.com
+./crtshx -d example.com
 ```
 
 **Find subdomains for multiple domains:**
 ```sh
-./crtx -d example.com -d anotherexample.com
+./crtshx -d example.com -d anotherexample.com
 ```
 
 **Read domains from `stdin` (e.g., from a file):**
 ```sh
-cat list_of_domains.txt | ./crtx
+cat list_of_domains.txt | ./crtshx
 ```
 
 ### Search by Organization
@@ -65,7 +65,7 @@ cat list_of_domains.txt | ./crtx
 **Perform a deep, recursive search for a domain:**
 This mode is significantly more thorough but also takes more time. It's great for discovering assets that might not be found through simple subdomain searches.
 ```sh
-./crtx -r -d example.com
+./crtshx -r -d example.com
 ```
 
 ### Adjusting Concurrency
@@ -73,7 +73,7 @@ This mode is significantly more thorough but also takes more time. It's great fo
 **Use the `-c` flag to set the number of concurrent workers:**
 The default is 50. Increasing this may speed up searches for large lists of domains, but be mindful of rate limits.
 ```sh
-cat list_of_domains.txt | ./crtx -c 100
+cat list_of_domains.txt | ./crtshx -c 100
 ```
 
 **Using a custom blocklist file:**
@@ -83,23 +83,23 @@ Create a file (e.g., `my_blocklist.txt`) with one domain suffix per line. `crtx`
 # amazonaws.com
 # digitalocean.com
 
-./crtx -d example.com -bf my_blocklist.txt
+./crtshx -d example.com -bf my_blocklist.txt
 ```
 
 ### Command-Line Options
 
 ```
-crtx - A powerful subdomain enumeration tool using crt.sh
+crtshx - A powerful subdomain enumeration tool using crt.sh
 
 Usage:
-  crtx [options]
+  crtshx [options]
 
 Examples:
-  cat domains.txt | crtx
-  crtx -d example.com
-  crtx -d example.com -d anotherexample.com
-  crtx -o "Example Inc"
-  crtx -r -d example.com
+  cat domains.txt | crtshx
+  crtshx -d example.com
+  crtshx -d example.com -d anotherexample.com
+  crtshx -o "Example Inc"
+  crtshx -r -d example.com
 
 Options:
   -bf string
