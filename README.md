@@ -86,6 +86,20 @@ Create a file (e.g., `my_blocklist.txt`) with one domain suffix per line. `crtx`
 ./crtshx -d example.com -bf my_blocklist.txt
 ```
 
+### Verbose Output
+
+**Enable verbose output to see what's happening during the search:**
+```sh
+./crtshx -v -d example.com
+```
+
+This will show detailed information about:
+- Domain gathering and validation
+- Worker threads and their activity
+- HTTP requests and responses
+- Certificate processing
+- Result filtering and counting
+
 ### Command-Line Options
 
 ```
@@ -100,6 +114,7 @@ Examples:
   crtshx -d example.com -d anotherexample.com
   crtshx -o "Example Inc"
   crtshx -r -d example.com
+  crtshx -v -d example.com  # verbose output
 
 Options:
   -bf string
@@ -110,4 +125,5 @@ Options:
         Domain to search for (can be specified multiple times)
   -o string
         Organization name to search for
-  -r    Perform a recursive search (requires -d) 
+  -r    Perform a recursive search (requires -d)
+  -v    Enable verbose output 

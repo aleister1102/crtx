@@ -29,46 +29,60 @@ func fetchCertsForQuery(query string, client *http.Client) ([]crtshEntry, error)
 		return nil, nil
 	}
 	requestURL := fmt.Sprintf("https://crt.sh/?q=%s&output=json", url.QueryEscape(query))
+	logVerbose("Making request to: %s", requestURL)
 
 	const maxRetries = 3
 	const retryDelay = 10 * time.Second
 	var entries []crtshEntry
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if attempt > 0 {
+			logVerbose("Retry attempt %d/%d for query: %s", attempt, maxRetries, query)
+		}
+
 		req, err := http.NewRequest("GET", requestURL, nil)
 		if err != nil {
+			logVerbose("Error creating request for %s: %v", query, err)
 			return nil, err
 		}
 		req.Header.Set("User-Agent", "crtx/1.9")
 
 		resp, err := client.Do(req)
 		if err != nil {
+			logVerbose("Error making request for %s: %v", query, err)
 			return nil, err
 		}
 
+		logVerbose("Response status for %s: %d", query, resp.StatusCode)
 		if resp.StatusCode == http.StatusOK {
 			body, err := io.ReadAll(resp.Body)
 			resp.Body.Close()
 			if err != nil {
+				logVerbose("Error reading response body for %s: %v", query, err)
 				return nil, err
 			}
 			if err := json.Unmarshal(body, &entries); err != nil {
+				logVerbose("Error parsing JSON for %s: %v", query, err)
 				return nil, err
 			}
+			logVerbose("Successfully parsed %d entries for query: %s", len(entries), query)
 			return entries, nil
 		}
 
 		if resp.StatusCode == http.StatusTooManyRequests {
 			resp.Body.Close()
 			if attempt < maxRetries {
+				logVerbose("Rate limited for query %s, retrying in %v... (Attempt %d/%d)", query, retryDelay, attempt+1, maxRetries)
 				fmt.Fprintf(os.Stderr, "[!] Received 429 Too Many Requests. Retrying in %v... (Attempt %d/%d for query: %s)\n", retryDelay, attempt+1, maxRetries, query)
 				time.Sleep(retryDelay)
 				continue
 			}
+			logVerbose("Max retries reached for query %s after 429 status", query)
 			return nil, fmt.Errorf("max retries reached for query '%s' after 429 status", query)
 		}
 
 		resp.Body.Close()
+		logVerbose("Bad status %s for query: %s", resp.Status, query)
 		return nil, fmt.Errorf("bad status: %s", resp.Status)
 	}
 

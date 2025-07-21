@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          # Exclude combinations that don't make sense
+          - goos: darwin
+            goarch: arm64
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.2'
+
+    - name: Get dependencies
+      run: go mod download
+
+    - name: Set binary name
+      id: binary
+      run: |
+        BINARY_NAME="crtx"
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          BINARY_NAME="${BINARY_NAME}.exe"
+        fi
+        echo "name=${BINARY_NAME}" >> $GITHUB_OUTPUT
+
+    - name: Build binary
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: 0
+      run: |
+        go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o ${{ steps.binary.outputs.name }} .
+
+    - name: Create archive
+      id: archive
+      run: |
+        ARCHIVE_NAME="crtx-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.goarch }}"
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          ARCHIVE_NAME="${ARCHIVE_NAME}.zip"
+          zip ${ARCHIVE_NAME} ${{ steps.binary.outputs.name }} README.md
+        else
+          ARCHIVE_NAME="${ARCHIVE_NAME}.tar.gz"
+          tar -czf ${ARCHIVE_NAME} ${{ steps.binary.outputs.name }} README.md
+        fi
+        echo "name=${ARCHIVE_NAME}" >> $GITHUB_OUTPUT
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.archive.outputs.name }}
+        path: ${{ steps.archive.outputs.name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        if git describe --tags --abbrev=0 HEAD~ >/dev/null 2>&1; then
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~)
+          echo "## Changes since ${PREVIOUS_TAG}" > CHANGELOG.md
+          git log --oneline ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" >> CHANGELOG.md
+        else
+          echo "## Initial Release" > CHANGELOG.md
+          echo "This is the first release of crtx." >> CHANGELOG.md
+        fi
+
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "artifacts/*/*"
+        bodyFile: CHANGELOG.md
+        tag: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}

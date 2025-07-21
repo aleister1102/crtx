@@ -51,6 +51,7 @@ func isDomainBlocked(domain string) bool {
 
 // loadAdditionalBlockedSuffixes loads more suffixes to block from a given file path.
 func loadAdditionalBlockedSuffixes(filePath string) {
+	logVerbose("Loading additional blocked suffixes from: %s", filePath)
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: Could not open blocklist file '%s': %v\n", filePath, err)
@@ -58,6 +59,7 @@ func loadAdditionalBlockedSuffixes(filePath string) {
 	}
 	defer file.Close()
 
+	initialCount := len(blockedSuffixes)
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		suffix := strings.TrimSpace(scanner.Text())
@@ -68,16 +70,23 @@ func loadAdditionalBlockedSuffixes(filePath string) {
 
 	if err := scanner.Err(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: Error reading blocklist file '%s': %v\n", filePath, err)
+		return
 	}
+
+	addedCount := len(blockedSuffixes) - initialCount
+	logVerbose("Loaded %d additional blocked suffixes (total: %d)", addedCount, len(blockedSuffixes))
 }
 
 // printUniqueResults prints unique strings from a channel to stdout.
 func printUniqueResults(resultsChan <-chan string) {
 	unique := make(map[string]struct{})
+	count := 0
 	for res := range resultsChan {
 		if _, exists := unique[res]; !exists {
 			unique[res] = struct{}{}
 			fmt.Println(res)
+			count++
 		}
 	}
+	logVerbose("Printed %d unique results", count)
 }
