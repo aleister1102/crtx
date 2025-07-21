@@ -20,12 +20,9 @@ func handleSimpleSearch(domains []string, orgName string, concurrency int) {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			logVerbose("Worker %d started", workerID)
 			for query := range queriesChan {
-				logVerbose("Worker %d processing query: %s", workerID, query)
 				processQuery(query, client, resultsChan)
 			}
-			logVerbose("Worker %d finished", workerID)
 		}(i)
 	}
 
@@ -43,7 +40,6 @@ func handleSimpleSearch(domains []string, orgName string, concurrency int) {
 			logVerbose("Querying %d domains", len(domains))
 			for _, domain := range domains {
 				query := "%." + domain
-				logVerbose("Adding query to queue: %s", query)
 				queriesChan <- query
 			}
 		}
@@ -72,25 +68,19 @@ func handleRecursiveSearch(initialDomains []string, concurrency int) {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			logVerbose("Stage 1 Worker %d started", workerID)
 			for query := range queryChan {
-				logVerbose("Stage 1 Worker %d processing: %s", workerID, query)
 				entries, err := fetchCertsForQuery(query, client)
 				if err != nil {
-					logVerbose("Stage 1 Worker %d error for %s: %v", workerID, query, err)
 					continue
 				}
-				logVerbose("Stage 1 Worker %d found %d entries for %s", workerID, len(entries), query)
 				for _, entry := range entries {
 					extractDataFromEntry(entry, allFoundSubdomains, allFoundOrgs)
 				}
 			}
-			logVerbose("Stage 1 Worker %d finished", workerID)
 		}(i)
 	}
 
 	for _, domain := range initialDomains {
-		logVerbose("Stage 1: Queuing domain searches for %s", domain)
 		queryChan <- domain
 		queryChan <- "%." + domain
 	}
@@ -110,26 +100,20 @@ func handleRecursiveSearch(initialDomains []string, concurrency int) {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			logVerbose("Stage 2 Worker %d started", workerID)
 			for org := range orgQueryChan {
-				logVerbose("Stage 2 Worker %d processing org: %s", workerID, org)
 				entries, err := fetchCertsForQuery(org, client)
 				if err != nil {
-					logVerbose("Stage 2 Worker %d error for %s: %v", workerID, org, err)
 					continue
 				}
-				logVerbose("Stage 2 Worker %d found %d entries for org %s", workerID, len(entries), org)
 				for _, entry := range entries {
 					extractDataFromEntry(entry, allFoundSubdomains, nil)
 				}
 			}
-			logVerbose("Stage 2 Worker %d finished", workerID)
 		}(i)
 	}
 
-	logVerbose("Stage 2: Queuing %d organizations", stage1Orgs.Length())
+	logVerbose("Stage 2: Processing %d organizations", stage1Orgs.Length())
 	for org := range stage1Orgs.items {
-		logVerbose("Stage 2: Queuing org: %s", org)
 		orgQueryChan <- org
 	}
 	close(orgQueryChan)
@@ -145,24 +129,19 @@ func handleRecursiveSearch(initialDomains []string, concurrency int) {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			logVerbose("Stage 3 Worker %d started", workerID)
 			for subdomain := range subdomainQueryChan {
-				logVerbose("Stage 3 Worker %d processing subdomain: %s", workerID, subdomain)
 				entries, err := fetchCertsForQuery(subdomain, client)
 				if err != nil {
-					logVerbose("Stage 3 Worker %d error for %s: %v", workerID, subdomain, err)
 					continue
 				}
-				logVerbose("Stage 3 Worker %d found %d entries for subdomain %s", workerID, len(entries), subdomain)
 				for _, entry := range entries {
 					extractDataFromEntry(entry, allFoundSubdomains, nil)
 				}
 			}
-			logVerbose("Stage 3 Worker %d finished", workerID)
 		}(i)
 	}
 
-	logVerbose("Stage 3: Queuing %d subdomains", stage1Subdomains.Length())
+	logVerbose("Stage 3: Processing %d subdomains", stage1Subdomains.Length())
 	for subdomain := range stage1Subdomains.items {
 		logVerbose("Stage 3: Queuing subdomain: %s", subdomain)
 		subdomainQueryChan <- subdomain
@@ -196,13 +175,10 @@ func handleRecursiveSearch(initialDomains []string, concurrency int) {
 }
 
 func processQuery(query string, client *http.Client, results chan<- string) {
-	logVerbose("Fetching certificates for query: %s", query)
 	entries, err := fetchCertsForQuery(query, client)
 	if err != nil {
-		logVerbose("Error fetching certificates for %s: %v", query, err)
 		return
 	}
-	logVerbose("Found %d certificate entries for query: %s", len(entries), query)
 	for _, entry := range entries {
 		extractAndSend(entry, results)
 	}

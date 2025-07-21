@@ -79,7 +79,7 @@ func main() {
 		if hasOrg {
 			logVerbose("Searching for organization: %s", *orgName)
 		} else {
-			logVerbose("Searching for domains: %v", allInputDomains)
+			logVerbose("Searching for %d domains", len(allInputDomains))
 		}
 		handleSimpleSearch(allInputDomains, *orgName, *concurrency)
 	}

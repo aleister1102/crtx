@@ -29,7 +29,6 @@ func fetchCertsForQuery(query string, client *http.Client) ([]crtshEntry, error)
 		return nil, nil
 	}
 	requestURL := fmt.Sprintf("https://crt.sh/?q=%s&output=json", url.QueryEscape(query))
-	logVerbose("Making request to: %s", requestURL)
 
 	const maxRetries = 3
 	const retryDelay = 10 * time.Second
@@ -42,30 +41,25 @@ func fetchCertsForQuery(query string, client *http.Client) ([]crtshEntry, error)
 
 		req, err := http.NewRequest("GET", requestURL, nil)
 		if err != nil {
-			logVerbose("Error creating request for %s: %v", query, err)
 			return nil, err
 		}
 		req.Header.Set("User-Agent", "crtx/1.9")
 
 		resp, err := client.Do(req)
 		if err != nil {
-			logVerbose("Error making request for %s: %v", query, err)
 			return nil, err
 		}
 
-		logVerbose("Response status for %s: %d", query, resp.StatusCode)
 		if resp.StatusCode == http.StatusOK {
 			body, err := io.ReadAll(resp.Body)
 			resp.Body.Close()
 			if err != nil {
-				logVerbose("Error reading response body for %s: %v", query, err)
 				return nil, err
 			}
 			if err := json.Unmarshal(body, &entries); err != nil {
-				logVerbose("Error parsing JSON for %s: %v", query, err)
 				return nil, err
 			}
-			logVerbose("Successfully parsed %d entries for query: %s", len(entries), query)
+			logVerbose("Found %d entries for query: %s", len(entries), query)
 			return entries, nil
 		}
 
@@ -82,7 +76,6 @@ func fetchCertsForQuery(query string, client *http.Client) ([]crtshEntry, error)
 		}
 
 		resp.Body.Close()
-		logVerbose("Bad status %s for query: %s", resp.Status, query)
 		return nil, fmt.Errorf("bad status: %s", resp.Status)
 	}
 
