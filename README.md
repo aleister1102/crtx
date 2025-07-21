@@ -11,11 +11,24 @@ A fast, concurrent subdomain enumeration tool using Certificate Transparency log
 
 ## Installation
 
+### Download Pre-built Binary
+Download the latest binary for your platform from [GitHub Releases](https://github.com/aleister1102/crtshx/releases):
+
+```bash
+# Linux/macOS - make executable and optionally move to PATH
+chmod +x crtx-v*-linux-amd64
+sudo mv crtx-v*-linux-amd64 /usr/local/bin/crtx
+
+# Windows - download .exe and run directly
+# crtx-v*-windows-amd64.exe
+```
+
+### Install from Source
 ```bash
 go install github.com/aleister1102/crtshx@latest
 ```
 
-Or build from source:
+### Build Locally
 ```bash
 go build
 ```

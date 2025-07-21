@@ -51,3 +51,7 @@ crtshx.exe
 
 # Project specific files
 domains.txt
+
+# Demo and documentation files (keep these)
+install-demo.sh
+RELEASE.md
